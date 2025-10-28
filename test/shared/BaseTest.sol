@@ -6,6 +6,7 @@ import {stdStorage, StdStorage} from "forge-std/StdStorage.sol";
 import {SafeTransferLib} from "src/libraries/SafeTransferLib.sol";
 import {RouteProcessor} from "src/RouteProcessor.sol";
 import {Constants} from "test/shared/Constants.sol";
+import {Planner, Plan} from "test/shared/Planner.sol";
 
 abstract contract BaseTest is Test, Constants {
     using stdStorage for StdStorage;
@@ -17,6 +18,8 @@ abstract contract BaseTest is Test, Constants {
 
     Account internal cooper;
     Account internal murphy;
+
+    Plan internal plan;
 
     modifier impersonate(address account) {
         vm.startPrank(account);
@@ -31,6 +34,10 @@ abstract contract BaseTest is Test, Constants {
 
         cooper = makeAccount("cooper");
         murphy = makeAccount("murphy");
+
+        plan = Planner.init();
+
+        revertToState();
     }
 
     function revertToState() internal {
