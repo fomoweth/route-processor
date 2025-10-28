@@ -19,6 +19,9 @@ library Errors {
     /// @notice Thrown when the obtained output amount is below the required minimum.
     error InsufficientAmountOut();
 
+    /// @notice Thrown when the contract or user balance is insufficient for an operation.
+    error InsufficientBalance();
+
     /// @notice Thrown when an invalid or unsupported command byte is parsed from the route stream.
     error InvalidCommand();
 
@@ -28,9 +31,6 @@ library Errors {
     /// @notice Thrown when the route stream contains an invalid or incomplete path.
     error InvalidPath();
 
-    /// @notice Thrown when the payer address does not match the expected source of tokens.
-    error InvalidPayer();
-
     /// @notice Thrown when the provided pool address is invalid or non-existent.
     error InvalidPool();
 
@@ -39,6 +39,9 @@ library Errors {
 
     /// @notice Thrown when the recipient address is zero or otherwise invalid.
     error InvalidRecipient();
+
+    /// @notice Thrown when the sender address does not match the expected source of tokens.
+    error InvalidSender();
 
     /// @notice Thrown when the provided signature is malformed, has invalid length, or fails verification.
     error InvalidSignature();
