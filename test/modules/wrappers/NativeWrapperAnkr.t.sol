@@ -8,15 +8,17 @@ import {BaseTest} from "test/shared/BaseTest.sol";
 contract NativeWrapperAnkrTest is BaseTest {
     using SafeTransferLib for address;
 
+    address internal constant GLOBAL_POOL_R46 = 0x84db6eE82b7Cf3b47E8F19270abdE5718B936670;
+
     // ETH -> ankrETH
     function test_processNative_Ankr_ETH_AnkrETH() public {
         address tokenIn = ETH;
         address tokenOut = ANKRETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
 
-        plan = plan.addWrap(Protocol.Ankr, ANKRETH_DEPOSIT, tokenOut, AssetType.ETH, AssetType.LST);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        deal(tokenIn, address(rp), 10 ether);
+
+        plan = plan.addWrap(Protocol.Ankr, GLOBAL_POOL_R46, tokenOut, AssetType.ETH, AssetType.LST);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
@@ -26,11 +28,11 @@ contract NativeWrapperAnkrTest is BaseTest {
     function test_processNative_Ankr_ETH_AETHb() public {
         address tokenIn = ETH;
         address tokenOut = AETHB;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
 
-        plan = plan.addWrap(Protocol.Ankr, ANKRETH_DEPOSIT, tokenOut, AssetType.ETH, AssetType.WLST);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        deal(tokenIn, address(rp), 10 ether);
+
+        plan = plan.addWrap(Protocol.Ankr, GLOBAL_POOL_R46, tokenOut, AssetType.ETH, AssetType.WLST);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
@@ -40,11 +42,11 @@ contract NativeWrapperAnkrTest is BaseTest {
     function test_processNative_Ankr_AnkrETH_AETHb() public {
         address tokenIn = ANKRETH;
         address tokenOut = AETHB;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addWrap(Protocol.Ankr, address(0), tokenOut, AssetType.LST, AssetType.WLST);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
@@ -54,11 +56,11 @@ contract NativeWrapperAnkrTest is BaseTest {
     function test_processNative_Ankr_AETHb_AnkrETH() public {
         address tokenIn = AETHB;
         address tokenOut = ANKRETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addWrap(Protocol.Ankr, address(0), tokenOut, AssetType.WLST, AssetType.LST);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);

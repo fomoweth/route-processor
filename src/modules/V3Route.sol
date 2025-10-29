@@ -93,10 +93,12 @@ abstract contract V3Route is CallbackValidation {
     ) internal returns (uint256 amountOut) {
         // Parse optional callback selector from `stream`
         bytes4 callbackSelector = stream.parseBytes4();
+
         // Fallback to default Uniswap V3 callback selector if not provided
         if (callbackSelector == bytes4(0)) {
             callbackSelector = this.uniswapV3SwapCallback.selector;
         }
+
         // Authenticate swap callback and execute swap
         amountOut = swap(pool, recipient, tokenIn < tokenOut, amountIn, abi.encodePacked(tokenIn), callbackSelector);
     }

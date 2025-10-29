@@ -8,15 +8,17 @@ import {BaseTest} from "test/shared/BaseTest.sol";
 contract NativeWrapperEtherFiTest is BaseTest {
     using SafeTransferLib for address;
 
+    address internal constant LIQUIDITY_POOL = 0x308861A430be4cce5502d0A12724771Fc6DaF216;
+
     // ETH -> eETH
     function test_processNative_EtherFi_ETH_EETH() public {
         address tokenIn = ETH;
         address tokenOut = EETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
 
-        plan = plan.addWrap(Protocol.EtherFi, EETH_DEPOSIT, tokenOut, AssetType.ETH, AssetType.LST);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        deal(tokenIn, address(rp), 10 ether);
+
+        plan = plan.addWrap(Protocol.EtherFi, LIQUIDITY_POOL, tokenOut, AssetType.ETH, AssetType.LST);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
@@ -26,11 +28,11 @@ contract NativeWrapperEtherFiTest is BaseTest {
     function test_processNative_EtherFi_ETH_WEETH() public {
         address tokenIn = ETH;
         address tokenOut = WEETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
 
-        plan = plan.addWrap(Protocol.EtherFi, EETH_DEPOSIT, tokenOut, AssetType.ETH, AssetType.WLST);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        deal(tokenIn, address(rp), 10 ether);
+
+        plan = plan.addWrap(Protocol.EtherFi, LIQUIDITY_POOL, tokenOut, AssetType.ETH, AssetType.WLST);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
@@ -40,11 +42,11 @@ contract NativeWrapperEtherFiTest is BaseTest {
     function test_processNative_EtherFi_EETH_WEETH() public {
         address tokenIn = EETH;
         address tokenOut = WEETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addWrap(Protocol.EtherFi, address(0), tokenOut, AssetType.LST, AssetType.WLST);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
@@ -54,11 +56,11 @@ contract NativeWrapperEtherFiTest is BaseTest {
     function test_processNative_EtherFi_WEETH_EETH() public {
         address tokenIn = WEETH;
         address tokenOut = EETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addWrap(Protocol.EtherFi, address(0), tokenOut, AssetType.WLST, AssetType.LST);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);

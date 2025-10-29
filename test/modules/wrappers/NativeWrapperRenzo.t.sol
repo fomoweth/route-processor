@@ -8,15 +8,17 @@ import {BaseTest} from "test/shared/BaseTest.sol";
 contract NativeWrapperRenzoTest is BaseTest {
     using SafeTransferLib for address;
 
+    address internal constant RESTAKE_MANAGER = 0x74a09653A083691711cF8215a6ab074BB4e99ef5;
+
     // ETH -> ezETH
     function test_processNative_Renzo_ETH_EZETH() public {
         address tokenIn = ETH;
         address tokenOut = EZETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
 
-        plan = plan.addWrap(Protocol.Renzo, EZETH_DEPOSIT, tokenOut, AssetType.ETH, AssetType.LRT);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        deal(tokenIn, address(rp), 10 ether);
+
+        plan = plan.addWrap(Protocol.Renzo, RESTAKE_MANAGER, tokenOut, AssetType.ETH, AssetType.LRT);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
@@ -26,11 +28,11 @@ contract NativeWrapperRenzoTest is BaseTest {
     function test_processNative_Renzo_STETH_EZETH() public {
         address tokenIn = STETH;
         address tokenOut = EZETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
 
-        plan = plan.addWrap(Protocol.Renzo, EZETH_DEPOSIT, tokenOut, AssetType.LST, AssetType.LRT);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        deal(tokenIn, address(rp), 10 ether);
+
+        plan = plan.addWrap(Protocol.Renzo, RESTAKE_MANAGER, tokenOut, AssetType.LST, AssetType.LRT);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
@@ -40,11 +42,11 @@ contract NativeWrapperRenzoTest is BaseTest {
     function test_processNative_Renzo_WSTETH_PZETH() public {
         address tokenIn = WSTETH;
         address tokenOut = PZETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addWrap(Protocol.Renzo, address(0), tokenOut, AssetType.WLST, AssetType.LRT);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);

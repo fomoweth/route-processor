@@ -12,11 +12,11 @@ contract NativeWrapperPufferTest is BaseTest {
     function test_processNative_Puffer_ETH_PUFETH() public {
         address tokenIn = ETH;
         address tokenOut = PUFETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addWrap(Protocol.Puffer, address(0), tokenOut, AssetType.ETH, AssetType.LRT);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
@@ -26,11 +26,11 @@ contract NativeWrapperPufferTest is BaseTest {
     function test_processNative_Puffer_WETH_PUFETH() public {
         address tokenIn = WETH;
         address tokenOut = PUFETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addWrap(Protocol.Puffer, address(0), tokenOut, AssetType.WETH, AssetType.LRT);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
@@ -40,11 +40,11 @@ contract NativeWrapperPufferTest is BaseTest {
     function test_processNative_Puffer_STETH_PUFETH() public {
         address tokenIn = STETH;
         address tokenOut = PUFETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addWrap(Protocol.Puffer, address(0), tokenOut, AssetType.LST, AssetType.LRT);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
@@ -54,11 +54,11 @@ contract NativeWrapperPufferTest is BaseTest {
     function test_processNative_Puffer_PUFETH_WETH() public {
         address tokenIn = PUFETH;
         address tokenOut = WETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addWrap(Protocol.Puffer, address(0), tokenOut, AssetType.LRT, AssetType.WETH);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);

@@ -8,15 +8,17 @@ import {BaseTest} from "test/shared/BaseTest.sol";
 contract NativeWrapperOriginTest is BaseTest {
     using SafeTransferLib for address;
 
+    address internal constant OETH_VAULT = 0x39254033945AA2E4809Cc2977E7087BEE48bd7Ab;
+
     // ETH -> OETH
     function test_processNative_Origin_WETH_OETH() public {
         address tokenIn = WETH;
         address tokenOut = OETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
 
-        plan = plan.addWrap(Protocol.Origin, OETH_DEPOSIT, tokenOut, AssetType.WETH, AssetType.LST);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        deal(tokenIn, address(rp), 10 ether);
+
+        plan = plan.addWrap(Protocol.Origin, OETH_VAULT, tokenOut, AssetType.WETH, AssetType.LST);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
@@ -26,11 +28,11 @@ contract NativeWrapperOriginTest is BaseTest {
     function test_processNative_Origin_WETH_WOETH() public {
         address tokenIn = WETH;
         address tokenOut = WOETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
 
-        plan = plan.addWrap(Protocol.Origin, OETH_DEPOSIT, tokenOut, AssetType.WETH, AssetType.WLST);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        deal(tokenIn, address(rp), 10 ether);
+
+        plan = plan.addWrap(Protocol.Origin, OETH_VAULT, tokenOut, AssetType.WETH, AssetType.WLST);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
@@ -40,11 +42,11 @@ contract NativeWrapperOriginTest is BaseTest {
     function test_processNative_Origin_OETH_WOETH() public {
         address tokenIn = OETH;
         address tokenOut = WOETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addWrap(Protocol.Origin, address(0), tokenOut, AssetType.LST, AssetType.WLST);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
@@ -54,11 +56,11 @@ contract NativeWrapperOriginTest is BaseTest {
     function test_processNative_Origin_WOETH_OETH() public {
         address tokenIn = WOETH;
         address tokenOut = OETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addWrap(Protocol.Origin, address(0), tokenOut, AssetType.WLST, AssetType.LST);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);

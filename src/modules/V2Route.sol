@@ -39,8 +39,10 @@ abstract contract V2Route {
     ) internal returns (uint256 amountOut) {
         // Parse optional fee from stream (0 means default)
         uint24 fee = stream.parseUint24();
+
         // Transfer input tokens into the pool
         tokenIn.safeTransfer(pool, amountIn);
+
         // Determine swap direction and execute swap
         amountOut = swap(pool, recipient, fee, tokenIn < tokenOut, tokenIn.balanceOf(pool));
     }

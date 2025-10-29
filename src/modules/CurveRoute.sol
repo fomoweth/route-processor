@@ -43,10 +43,13 @@ abstract contract CurveRoute {
         bool isCryptoPool = stream.parseBool();
         bool useUnderlying = stream.parseBool();
         bool useEth = stream.parseBool();
+
         // Approve input amount to Curve pool if ERC20
         tokenIn.forceApprove(pool, amountIn);
+
         // Perform the swap
         amountOut = exchange(pool, tokenIn, tokenOut, i, j, amountIn, isCryptoPool, useUnderlying, useEth);
+
         // Forward output tokens if recipient is external
         if (recipient != address(this)) tokenOut.safeTransfer(recipient, amountOut);
     }

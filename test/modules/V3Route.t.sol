@@ -8,6 +8,9 @@ import {BaseTest} from "test/shared/BaseTest.sol";
 contract V3RouteTest is BaseTest {
     using SafeTransferLib for address;
 
+    bytes4 internal constant UNISWAP_V3_SWAP_CALLBACK = 0xfa461e33; // uniswapV3SwapCallback(int256,int256,bytes)
+    bytes4 internal constant PANCAKE_V3_SWAP_CALLBACK = 0x23a69e75; // pancakeV3SwapCallback(int256,int256,bytes)
+
     address internal constant UNI_V3_USDC_WETH = 0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640; // 0.05%
     address internal constant UNI_V3_WETH_USDT = 0x4e68Ccd3E89f51C3074ca5072bbAC773960dFa36; // 0.3%
 
@@ -25,114 +28,114 @@ contract V3RouteTest is BaseTest {
     }
 
     // USDC -> WETH -> USDT on Uniswap V3
-    function test_processV3SwapForUniswapV3_multiHop() public {
+    function test_processV3SwapOnUniswapV3_multiHop() public {
         address tokenIn = USDC;
         address tokenOut = USDT;
-        uint256 amountIn = 10000e6;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10000e6);
 
         plan = plan.addV3Swap(UNI_V3_USDC_WETH, WETH, UNISWAP_V3_SWAP_CALLBACK);
         plan = plan.addV3Swap(UNI_V3_WETH_USDT, USDT, UNISWAP_V3_SWAP_CALLBACK);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
     }
 
     // USDC -> WETH -> USDT on PancakeSwap V3
-    function test_processV3SwapForPancakeV3_multiHop() public {
+    function test_processV3SwapOnPancakeV3_multiHop() public {
         address tokenIn = USDC;
         address tokenOut = USDT;
-        uint256 amountIn = 10000e6;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10000e6);
 
         plan = plan.addV3Swap(PANCAKE_V3_USDC_WETH, WETH, PANCAKE_V3_SWAP_CALLBACK);
         plan = plan.addV3Swap(PANCAKE_V3_WETH_USDT, USDT, PANCAKE_V3_SWAP_CALLBACK);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
     }
 
     // WETH -> USDC on Uniswap V3
-    function test_processV3SwapForUniswapV3_WETH_USDC() public {
+    function test_processV3SwapOnUniswapV3_WETH_USDC() public {
         address tokenIn = WETH;
         address tokenOut = USDC;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addV3Swap(UNI_V3_USDC_WETH, tokenOut, UNISWAP_V3_SWAP_CALLBACK);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
     }
 
     // USDC -> WETH on Uniswap V3
-    function test_processV3SwapForUniswapV3_USDC_WETH() public {
+    function test_processV3SwapOnUniswapV3_USDC_WETH() public {
         address tokenIn = USDC;
         address tokenOut = WETH;
-        uint256 amountIn = 40000e6;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 40000e6);
 
         plan = plan.addV3Swap(UNI_V3_USDC_WETH, tokenOut, UNISWAP_V3_SWAP_CALLBACK);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
     }
 
     // WETH -> USDC on PancakeSwap V3
-    function test_processV3SwapForPancakeV3_WETH_USDC() public {
+    function test_processV3SwapOnPancakeV3_WETH_USDC() public {
         address tokenIn = WETH;
         address tokenOut = USDC;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addV3Swap(PANCAKE_V3_USDC_WETH, tokenOut, PANCAKE_V3_SWAP_CALLBACK);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
     }
 
     // USDC -> WETH on PancakeSwap V3
-    function test_processV3SwapForPancakeV3_USDC_WETH() public {
+    function test_processV3SwapOnPancakeV3_USDC_WETH() public {
         address tokenIn = USDC;
         address tokenOut = WETH;
-        uint256 amountIn = 40000e6;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 40000e6);
 
         plan = plan.addV3Swap(PANCAKE_V3_USDC_WETH, tokenOut, PANCAKE_V3_SWAP_CALLBACK);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
     }
 
     // WETH -> SUSHI on SushiSwap V3
-    function test_processV3SwapForSushiV3_WETH_SUSHI() public {
+    function test_processV3SwapOnSushiV3_WETH_SUSHI() public {
         address tokenIn = WETH;
         address tokenOut = SUSHI;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addV3Swap(SLP_V3_SUSHI_WETH, tokenOut, UNISWAP_V3_SWAP_CALLBACK);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
     }
 
     // SUSHI -> WETH on SushiSwap V3
-    function test_processV3SwapForSushiV3_SUSHI_WETH() public {
+    function test_processV3SwapOnSushiV3_SUSHI_WETH() public {
         address tokenIn = SUSHI;
         address tokenOut = WETH;
-        uint256 amountIn = 50000 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 50000 ether);
 
         plan = plan.addV3Swap(SLP_V3_SUSHI_WETH, tokenOut, UNISWAP_V3_SWAP_CALLBACK);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);

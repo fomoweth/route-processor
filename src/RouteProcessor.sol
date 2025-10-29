@@ -30,7 +30,7 @@ contract RouteProcessor is
 {
     using SafeTransferLib for address;
 
-    /// @dev Constant flag for denoting a “use contract balance” input amount.
+    /// @dev Constant flag for denoting a `use contract balance` input amount.
     uint256 private constant CONTRACT_BALANCE = 0x8000000000000000000000000000000000000000000000000000000000000000;
 
     /// @notice Reverts if the provided `deadline` has already passed.
@@ -60,10 +60,7 @@ contract RouteProcessor is
             } else if (command == Commands.PERMIT2_TRANSFER_FROM_BATCH) {
                 permit2BatchTransferFrom(stream);
             } else if (command == Commands.SWEEP) {
-                address token = stream.parseAddress();
-                address recipient = stream.parseAddress();
-                uint256 amountMinimum = stream.parseUint256();
-                sweep(token, recipient, amountMinimum);
+                sweep(stream);
             } else {
                 revert Errors.InvalidCommand();
             }
@@ -74,6 +71,8 @@ contract RouteProcessor is
     /// @dev Iterates through the encoded pools within the route stream, invoking
     ///      the appropriate module (Curve, UniswapV2, UniswapV3, or NativeWrapper)
     ///      for each hop. Supports both ERC20 and native tokens.
+    /// @param stream Encoded stream containing pool and token data for each hop.
+    /// @return amountOut The final output amount after all hops
     function processSwap(Stream stream) internal returns (uint256 amountOut) {
         address recipient = stream.parseAddress();
         address tokenIn = stream.parseAddress();
@@ -114,9 +113,18 @@ contract RouteProcessor is
         if (amountOut < amountOutMinimum) revert Errors.InsufficientAmountOut();
     }
 
-    function sweep(address token, address recipient, uint256 amountMinimum) internal {
+    /// @notice Transfers the full contract balance of a specified token to a recipient.
+    /// @param stream Encoded stream containing token, recipient, and minimum amount to enforce.
+    function sweep(Stream stream) internal {
+        address token = stream.parseAddress();
+        address recipient = stream.parseAddress();
+        uint256 amountMinimum = stream.parseUint256();
         uint256 balance = token.balanceOfSelf();
+
+        // Ensure the contract holds at least the required minimum balance
         if (balance < amountMinimum) revert Errors.InsufficientBalance();
+
+        // Transfer the full token balance to the recipient
         if (balance != 0) token.safeTransfer(recipient, balance);
     }
 

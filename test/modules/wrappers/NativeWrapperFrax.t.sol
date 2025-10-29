@@ -8,15 +8,17 @@ import {BaseTest} from "test/shared/BaseTest.sol";
 contract NativeWrapperFraxTest is BaseTest {
     using SafeTransferLib for address;
 
+    address internal constant FRXETH_MINTER = 0xbAFA44EFE7901E04E39Dad13167D089C559c1138;
+
     // ETH -> frxETH
     function test_processNative_Frax_ETH_FRXETH() public {
         address tokenIn = ETH;
         address tokenOut = FRXETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
 
-        plan = plan.addWrap(Protocol.Frax, FRXETH_DEPOSIT, tokenOut, AssetType.ETH, AssetType.LST);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        deal(tokenIn, address(rp), 10 ether);
+
+        plan = plan.addWrap(Protocol.Frax, FRXETH_MINTER, tokenOut, AssetType.ETH, AssetType.LST);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
@@ -26,11 +28,11 @@ contract NativeWrapperFraxTest is BaseTest {
     function test_processNative_Frax_ETH_SFRXETH() public {
         address tokenIn = ETH;
         address tokenOut = SFRXETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
 
-        plan = plan.addWrap(Protocol.Frax, FRXETH_DEPOSIT, tokenOut, AssetType.ETH, AssetType.WLST);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        deal(tokenIn, address(rp), 10 ether);
+
+        plan = plan.addWrap(Protocol.Frax, FRXETH_MINTER, tokenOut, AssetType.ETH, AssetType.WLST);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
@@ -40,11 +42,11 @@ contract NativeWrapperFraxTest is BaseTest {
     function test_processNative_Frax_FRXETH_SFRXETH() public {
         address tokenIn = FRXETH;
         address tokenOut = SFRXETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addWrap(Protocol.Frax, address(0), tokenOut, AssetType.LST, AssetType.WLST);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
@@ -54,11 +56,11 @@ contract NativeWrapperFraxTest is BaseTest {
     function test_processNative_Frax_SFRXETH_FRXETH() public {
         address tokenIn = SFRXETH;
         address tokenOut = FRXETH;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addWrap(Protocol.Frax, address(0), tokenOut, AssetType.WLST, AssetType.LST);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);

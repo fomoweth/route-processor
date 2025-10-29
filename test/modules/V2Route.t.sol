@@ -8,6 +8,9 @@ import {BaseTest} from "test/shared/BaseTest.sol";
 contract V2RouteTest is BaseTest {
     using SafeTransferLib for address;
 
+    uint24 internal constant UNI_V2_FEE = 3000;
+    uint24 internal constant PANCAKE_V2_FEE = 2500;
+
     address internal constant UNI_V2_WBTC_WETH = 0xBb2b8038a1640196FbE3e38816F3e67Cba72D940;
     address internal constant UNI_V2_USDC_WETH = 0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc;
 
@@ -19,136 +22,136 @@ contract V2RouteTest is BaseTest {
 
     function test_processV2Swap_revertsWhenIdenticalTokens() public {
         plan = plan.addV2Swap(UNI_V2_USDC_WETH, WETH, UNI_V2_FEE);
-        plan = plan.finalizeSwap(address(this), WETH, 1 ether, 0);
+        plan = plan.finalizeSwap(address(this), WETH, 1 ether, 1);
 
         vm.expectRevert(Errors.IdenticalAddresses.selector);
         rp.processRoute(plan.encode());
     }
 
     // WBTC -> WETH -> USDC on Uniswap V2
-    function test_processV2SwapForUniswapV2_multiHop() public {
+    function test_processV2SwapOnUniswapV2_multiHop() public {
         address tokenIn = WBTC;
         address tokenOut = USDC;
-        uint256 amountIn = 1e8;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 1e8);
 
         plan = plan.addV2Swap(UNI_V2_WBTC_WETH, WETH, UNI_V2_FEE);
         plan = plan.addV2Swap(UNI_V2_USDC_WETH, USDC, UNI_V2_FEE);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
     }
 
     // WETH -> WBTC on Uniswap V2
-    function test_processV2SwapForUniswapV2_WETH_WBTC() public {
+    function test_processV2SwapOnUniswapV2_WETH_WBTC() public {
         address tokenIn = WETH;
         address tokenOut = WBTC;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addV2Swap(UNI_V2_WBTC_WETH, tokenOut, UNI_V2_FEE);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
     }
 
     // WBTC -> WETH on Uniswap V2
-    function test_processV2SwapForUniswapV2_WBTC_WETH() public {
+    function test_processV2SwapOnUniswapV2_WBTC_WETH() public {
         address tokenIn = WBTC;
         address tokenOut = WETH;
-        uint256 amountIn = 1e8;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 1e8);
 
         plan = plan.addV2Swap(UNI_V2_WBTC_WETH, tokenOut, UNI_V2_FEE);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
     }
 
     // WBTC -> WETH -> USDC on PancakeSwap V2
-    function test_processV2SwapForPancakeV2_multiHop() public {
+    function test_processV2SwapOnPancakeV2_multiHop() public {
         address tokenIn = WBTC;
         address tokenOut = USDC;
-        uint256 amountIn = 1e8;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 1e8);
 
         plan = plan.addV2Swap(PANCAKE_V2_WBTC_WETH, WETH, PANCAKE_V2_FEE);
         plan = plan.addV2Swap(PANCAKE_V2_USDC_WETH, USDC, PANCAKE_V2_FEE);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
     }
 
     // WETH -> WBTC on PancakeSwap V2
-    function test_processV2SwapForPancakeV2_WETH_WBTC() public {
+    function test_processV2SwapOnPancakeV2_WETH_WBTC() public {
         address tokenIn = WETH;
         address tokenOut = WBTC;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addV2Swap(PANCAKE_V2_WBTC_WETH, tokenOut, PANCAKE_V2_FEE);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
     }
 
     // WBTC -> WETH on PancakeSwap V2
-    function test_processV2SwapForPancakeV2_WBTC_WETH() public {
+    function test_processV2SwapOnPancakeV2_WBTC_WETH() public {
         address tokenIn = WBTC;
         address tokenOut = WETH;
-        uint256 amountIn = 1e8;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 1e8);
 
         plan = plan.addV2Swap(PANCAKE_V2_WBTC_WETH, tokenOut, PANCAKE_V2_FEE);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
     }
 
     // WBTC -> WETH -> SUSHI on SushiSwap V2
-    function test_processV2SwapForSushiV2_multiHop() public {
+    function test_processV2SwapOnSushiV2_multiHop() public {
         address tokenIn = WBTC;
         address tokenOut = SUSHI;
-        uint256 amountIn = 1e8;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 1e8);
 
         plan = plan.addV2Swap(SLP_V2_WBTC_WETH, WETH, UNI_V2_FEE);
         plan = plan.addV2Swap(SLP_V2_SUSHI_WETH, SUSHI, UNI_V2_FEE);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
     }
 
     // WETH -> WBTC on SushiSwap V2
-    function test_processV2SwapForSushiV2_WETH_WBTC() public {
+    function test_processV2SwapOnSushiV2_WETH_WBTC() public {
         address tokenIn = WETH;
         address tokenOut = WBTC;
-        uint256 amountIn = 10 ether;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 10 ether);
 
         plan = plan.addV2Swap(SLP_V2_WBTC_WETH, tokenOut, UNI_V2_FEE);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);
     }
 
     // WBTC -> WETH on SushiSwap V2
-    function test_processV2SwapForSushiV2_WBTC_WETH() public {
+    function test_processV2SwapOnSushiV2_WBTC_WETH() public {
         address tokenIn = WBTC;
         address tokenOut = WETH;
-        uint256 amountIn = 1e8;
-        deal(tokenIn, address(rp), amountIn);
+
+        deal(tokenIn, address(rp), 1e8);
 
         plan = plan.addV2Swap(SLP_V2_WBTC_WETH, tokenOut, UNI_V2_FEE);
-        plan = plan.finalizeSwap(cooper.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(cooper.addr, tokenIn, CONTRACT_BALANCE, 1);
 
         rp.processRoute(plan.encode());
         assertGt(tokenOut.balanceOf(cooper.addr), 0);

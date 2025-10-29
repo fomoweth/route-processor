@@ -9,7 +9,6 @@ import {BaseTest} from "test/shared/BaseTest.sol";
 import {Permit2Utils} from "test/shared/Permit2Utils.sol";
 
 contract Permit2ForwarderTest is BaseTest {
-    using Permit2Utils for uint256;
     using SafeTransferLib for address;
 
     error InvalidSigner();
@@ -43,7 +42,7 @@ contract Permit2ForwarderTest is BaseTest {
         });
 
         uint256 sigDeadline = vm.getBlockTimestamp() + 10;
-        bytes memory signature = cooper.key.signPermit(details, address(rp), sigDeadline);
+        bytes memory signature = Permit2Utils.signPermit(cooper.key, details, address(rp), sigDeadline);
         bytes memory route = Permit2Utils.encodePermit(details, sigDeadline, signature);
 
         vm.expectEmit(true, true, true, true);
@@ -69,7 +68,7 @@ contract Permit2ForwarderTest is BaseTest {
         });
 
         uint256 sigDeadline = vm.getBlockTimestamp() + 10;
-        bytes memory signature = mann.key.signPermit(details, address(rp), sigDeadline);
+        bytes memory signature = Permit2Utils.signPermit(mann.key, details, address(rp), sigDeadline);
         bytes memory route = Permit2Utils.encodePermit(details, sigDeadline, signature);
 
         vm.expectRevert(InvalidSigner.selector);
@@ -93,15 +92,14 @@ contract Permit2ForwarderTest is BaseTest {
         }
 
         uint256 sigDeadline = vm.getBlockTimestamp() + 10;
-        bytes memory signature = cooper.key.signPermit(details, address(rp), sigDeadline);
+        bytes memory signature = Permit2Utils.signPermit(cooper.key, details, address(rp), sigDeadline);
         bytes memory route = Permit2Utils.encodePermit(details, sigDeadline, signature);
 
         vm.prank(cooper.addr);
         rp.processRoute(route);
 
         for (uint256 i = 0; i < details.length; ++i) {
-            (uint160 amount, uint48 expiration, uint48 nonce) =
-                PERMIT2.allowance(cooper.addr, details[i].token, address(rp));
+            (uint160 amount, uint48 expiration, uint48 nonce) = PERMIT2.allowance(cooper.addr, tokens[i], address(rp));
             assertEq(amount, details[i].amount);
             assertEq(expiration, MAX_UINT48);
             assertEq(nonce, 1);
@@ -120,7 +118,7 @@ contract Permit2ForwarderTest is BaseTest {
         }
 
         uint256 sigDeadline = vm.getBlockTimestamp() + 10;
-        bytes memory signature = mann.key.signPermit(details, address(rp), sigDeadline);
+        bytes memory signature = Permit2Utils.signPermit(mann.key, details, address(rp), sigDeadline);
         bytes memory route = Permit2Utils.encodePermit(details, sigDeadline, signature);
 
         vm.expectRevert(InvalidSigner.selector);
@@ -151,7 +149,7 @@ contract Permit2ForwarderTest is BaseTest {
                 token: tokens[i]
             });
 
-            vm.expectEmit(true, true, true, true, details[i].token);
+            vm.expectEmit(true, true, true, true, tokens[i]);
             emit IERC20.Transfer(cooper.addr, address(rp), details[i].amount);
         }
 
