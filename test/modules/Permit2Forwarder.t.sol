@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
-import {IAllowanceTransfer as IPermit2} from "permit2/interfaces/IAllowanceTransfer.sol";
+import {IAllowanceTransfer} from "permit2/interfaces/IAllowanceTransfer.sol";
 import {Errors} from "src/libraries/Errors.sol";
 import {SafeTransferLib} from "src/libraries/SafeTransferLib.sol";
 import {BaseTest} from "test/shared/BaseTest.sol";
@@ -34,7 +34,7 @@ contract Permit2ForwarderTest is BaseTest {
     function test_permitSingle(uint256 seed) public {
         address token = random(tokens, seed);
 
-        IPermit2.PermitDetails memory details = IPermit2.PermitDetails({
+        IAllowanceTransfer.PermitDetails memory details = IAllowanceTransfer.PermitDetails({
             token: token,
             amount: uint160(token.balanceOf(cooper.addr)),
             expiration: MAX_UINT48,
@@ -46,7 +46,7 @@ contract Permit2ForwarderTest is BaseTest {
         bytes memory route = Permit2Utils.encodePermit(details, sigDeadline, signature);
 
         vm.expectEmit(true, true, true, true);
-        emit IPermit2.Permit(cooper.addr, token, address(rp), details.amount, MAX_UINT48, 0);
+        emit IAllowanceTransfer.Permit(cooper.addr, token, address(rp), details.amount, MAX_UINT48, 0);
 
         vm.prank(cooper.addr);
         rp.processRoute(route);
@@ -60,7 +60,7 @@ contract Permit2ForwarderTest is BaseTest {
     function test_permitSingle_revertsOnInvalidSignature(uint256 seed) public {
         address token = random(tokens, seed);
 
-        IPermit2.PermitDetails memory details = IPermit2.PermitDetails({
+        IAllowanceTransfer.PermitDetails memory details = IAllowanceTransfer.PermitDetails({
             token: token,
             amount: uint160(token.balanceOf(cooper.addr)),
             expiration: MAX_UINT48,
@@ -79,16 +79,16 @@ contract Permit2ForwarderTest is BaseTest {
     function test_permitBatch() public {
         vm.expectEmit(true, true, true, true);
 
-        IPermit2.PermitDetails[] memory details = new IPermit2.PermitDetails[](tokens.length);
+        IAllowanceTransfer.PermitDetails[] memory details = new IAllowanceTransfer.PermitDetails[](tokens.length);
         for (uint256 i = 0; i < details.length; ++i) {
-            details[i] = IPermit2.PermitDetails({
+            details[i] = IAllowanceTransfer.PermitDetails({
                 token: tokens[i],
                 amount: uint160(tokens[i].balanceOf(cooper.addr)),
                 expiration: MAX_UINT48,
                 nonce: 0
             });
 
-            emit IPermit2.Permit(cooper.addr, details[i].token, address(rp), details[i].amount, MAX_UINT48, 0);
+            emit IAllowanceTransfer.Permit(cooper.addr, details[i].token, address(rp), details[i].amount, MAX_UINT48, 0);
         }
 
         uint256 sigDeadline = vm.getBlockTimestamp() + 10;
@@ -107,9 +107,9 @@ contract Permit2ForwarderTest is BaseTest {
     }
 
     function test_permitBatch_revertsOnInvalidSignature() public {
-        IPermit2.PermitDetails[] memory details = new IPermit2.PermitDetails[](tokens.length);
+        IAllowanceTransfer.PermitDetails[] memory details = new IAllowanceTransfer.PermitDetails[](tokens.length);
         for (uint256 i = 0; i < details.length; ++i) {
-            details[i] = IPermit2.PermitDetails({
+            details[i] = IAllowanceTransfer.PermitDetails({
                 token: tokens[i],
                 amount: uint160(tokens[i].balanceOf(cooper.addr)),
                 expiration: MAX_UINT48,
@@ -140,9 +140,10 @@ contract Permit2ForwarderTest is BaseTest {
     }
 
     function test_permit2BatchTransferFrom() public {
-        IPermit2.AllowanceTransferDetails[] memory details = new IPermit2.AllowanceTransferDetails[](tokens.length);
+        IAllowanceTransfer.AllowanceTransferDetails[] memory details =
+            new IAllowanceTransfer.AllowanceTransferDetails[](tokens.length);
         for (uint256 i = 0; i < details.length; ++i) {
-            details[i] = IPermit2.AllowanceTransferDetails({
+            details[i] = IAllowanceTransfer.AllowanceTransferDetails({
                 from: cooper.addr,
                 to: address(rp),
                 amount: uint160(tokens[i].balanceOf(cooper.addr)),
@@ -163,9 +164,10 @@ contract Permit2ForwarderTest is BaseTest {
     }
 
     function test_permit2BatchTransferFrom_revertsWithInvalidSender() public {
-        IPermit2.AllowanceTransferDetails[] memory details = new IPermit2.AllowanceTransferDetails[](tokens.length);
+        IAllowanceTransfer.AllowanceTransferDetails[] memory details =
+            new IAllowanceTransfer.AllowanceTransferDetails[](tokens.length);
         for (uint256 i = 0; i < details.length; ++i) {
-            details[i] = IPermit2.AllowanceTransferDetails({
+            details[i] = IAllowanceTransfer.AllowanceTransferDetails({
                 from: mann.addr,
                 to: address(rp),
                 amount: uint160(tokens[i].balanceOf(cooper.addr)),
@@ -180,9 +182,10 @@ contract Permit2ForwarderTest is BaseTest {
     }
 
     function test_permit2BatchTransferFrom_revertsWithInvalidRecipient() public {
-        IPermit2.AllowanceTransferDetails[] memory details = new IPermit2.AllowanceTransferDetails[](tokens.length);
+        IAllowanceTransfer.AllowanceTransferDetails[] memory details =
+            new IAllowanceTransfer.AllowanceTransferDetails[](tokens.length);
         for (uint256 i = 0; i < details.length; ++i) {
-            details[i] = IPermit2.AllowanceTransferDetails({
+            details[i] = IAllowanceTransfer.AllowanceTransferDetails({
                 from: cooper.addr,
                 to: mann.addr,
                 amount: uint160(tokens[i].balanceOf(cooper.addr)),

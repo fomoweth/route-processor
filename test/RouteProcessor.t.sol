@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IAllowanceTransfer as IPermit2} from "permit2/interfaces/IAllowanceTransfer.sol";
+import {IAllowanceTransfer} from "permit2/interfaces/IAllowanceTransfer.sol";
 import {Commands} from "src/libraries/Commands.sol";
 import {Errors} from "src/libraries/Errors.sol";
 import {SafeTransferLib} from "src/libraries/SafeTransferLib.sol";
@@ -34,8 +34,8 @@ contract RouteProcessorTest is BaseTest {
         deal(tokenIn, cooper.addr, amountTotal);
         tokenIn.forceApprove(address(PERMIT2), MAX_UINT256);
 
-        IPermit2.PermitDetails memory details =
-            IPermit2.PermitDetails({token: tokenIn, amount: amountTotal, expiration: MAX_UINT48, nonce: 0});
+        IAllowanceTransfer.PermitDetails memory details =
+            IAllowanceTransfer.PermitDetails({token: tokenIn, amount: amountTotal, expiration: MAX_UINT48, nonce: 0});
 
         uint256 sigDeadline = vm.getBlockTimestamp() + 10;
         bytes memory signature = Permit2Utils.signPermit(cooper.key, details, address(rp), sigDeadline);
@@ -74,8 +74,8 @@ contract RouteProcessorTest is BaseTest {
         deal(tokenIn, cooper.addr, amountTotal);
         tokenIn.forceApprove(address(PERMIT2), MAX_UINT256);
 
-        IPermit2.PermitDetails memory details =
-            IPermit2.PermitDetails({token: tokenIn, amount: amountTotal, expiration: MAX_UINT48, nonce: 0});
+        IAllowanceTransfer.PermitDetails memory details =
+            IAllowanceTransfer.PermitDetails({token: tokenIn, amount: amountTotal, expiration: MAX_UINT48, nonce: 0});
 
         uint256 sigDeadline = vm.getBlockTimestamp() + 10;
         bytes memory signature = Permit2Utils.signPermit(cooper.key, details, address(rp), sigDeadline);
@@ -116,22 +116,24 @@ contract RouteProcessorTest is BaseTest {
         tokens[1] = WEETH;
         tokens[2] = SFRXETH;
 
-        IPermit2.AllowanceTransferDetails[] memory transferDetails = new IPermit2.AllowanceTransferDetails[](n);
+        IAllowanceTransfer.AllowanceTransferDetails[] memory transferDetails =
+            new IAllowanceTransfer.AllowanceTransferDetails[](n);
 
-        IPermit2.PermitDetails[] memory details = new IPermit2.PermitDetails[](n);
+        IAllowanceTransfer.PermitDetails[] memory details = new IAllowanceTransfer.PermitDetails[](n);
 
         for (uint256 i = 0; i < n; ++i) {
             deal(tokens[i], cooper.addr, amountIn);
             tokens[i].forceApprove(address(PERMIT2), MAX_UINT256);
 
-            transferDetails[i] = IPermit2.AllowanceTransferDetails({
+            transferDetails[i] = IAllowanceTransfer.AllowanceTransferDetails({
                 from: cooper.addr,
                 to: address(rp),
                 amount: amountIn,
                 token: tokens[i]
             });
 
-            details[i] = IPermit2.PermitDetails({token: tokens[i], amount: amountIn, expiration: MAX_UINT48, nonce: 0});
+            details[i] =
+                IAllowanceTransfer.PermitDetails({token: tokens[i], amount: amountIn, expiration: MAX_UINT48, nonce: 0});
         }
 
         uint256 sigDeadline = vm.getBlockTimestamp() + 10;
@@ -177,23 +179,28 @@ contract RouteProcessorTest is BaseTest {
         amounts[1] = 10000e6;
         amounts[2] = 10000e6;
 
-        IPermit2.AllowanceTransferDetails[] memory transferDetails = new IPermit2.AllowanceTransferDetails[](n);
+        IAllowanceTransfer.AllowanceTransferDetails[] memory transferDetails =
+            new IAllowanceTransfer.AllowanceTransferDetails[](n);
 
-        IPermit2.PermitDetails[] memory details = new IPermit2.PermitDetails[](n);
+        IAllowanceTransfer.PermitDetails[] memory details = new IAllowanceTransfer.PermitDetails[](n);
 
         for (uint256 i = 0; i < n; ++i) {
             deal(tokens[i], cooper.addr, amounts[i]);
             tokens[i].forceApprove(address(PERMIT2), MAX_UINT256);
 
-            transferDetails[i] = IPermit2.AllowanceTransferDetails({
+            transferDetails[i] = IAllowanceTransfer.AllowanceTransferDetails({
                 from: cooper.addr,
                 to: address(rp),
                 amount: amounts[i],
                 token: tokens[i]
             });
 
-            details[i] =
-                IPermit2.PermitDetails({token: tokens[i], amount: amounts[i], expiration: MAX_UINT48, nonce: 0});
+            details[i] = IAllowanceTransfer.PermitDetails({
+                token: tokens[i],
+                amount: amounts[i],
+                expiration: MAX_UINT48,
+                nonce: 0
+            });
         }
 
         uint256 sigDeadline = vm.getBlockTimestamp() + 10;
@@ -235,8 +242,8 @@ contract RouteProcessorTest is BaseTest {
         deal(tokenIn, cooper.addr, amountIn);
         tokenIn.forceApprove(address(PERMIT2), MAX_UINT256);
 
-        IPermit2.PermitDetails memory details =
-            IPermit2.PermitDetails({token: tokenIn, amount: amountIn, expiration: MAX_UINT48, nonce: 0});
+        IAllowanceTransfer.PermitDetails memory details =
+            IAllowanceTransfer.PermitDetails({token: tokenIn, amount: amountIn, expiration: MAX_UINT48, nonce: 0});
 
         uint256 sigDeadline = vm.getBlockTimestamp() + 10;
         bytes memory signature = Permit2Utils.signPermit(cooper.key, details, address(rp), sigDeadline);
