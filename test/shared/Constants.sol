@@ -6,6 +6,9 @@ import {IPermit2} from "permit2/interfaces/IPermit2.sol";
 abstract contract Constants {
     IPermit2 internal constant PERMIT2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
 
+    address internal constant MSG_SENDER = 0x0000000000000000000000000000000000000001;
+    address internal constant ADDRESS_THIS = 0x0000000000000000000000000000000000000002;
+
     address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address internal constant RETH = 0xae78736Cd615f374D3085123A210448E74Fc6393;

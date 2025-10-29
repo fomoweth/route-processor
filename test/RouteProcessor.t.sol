@@ -26,6 +26,44 @@ contract RouteProcessorTest is BaseTest {
     address internal constant TRYLSD = 0x2570f1bD5D2735314FC102eb12Fc1aFe9e6E7193; // wstETH/rETH/sfrxETH
     address internal constant TRICRYPTO = 0xD51a44d3FaE010294C616388b506AcdA1bfAAE46; // USDT/WBTC/WETH
 
+    function test_processRoute_complexRoute() public impersonate(cooper.addr) {
+        address tokenIn = WETH;
+        uint160 amountIn = 10 ether;
+
+        deal(tokenIn, cooper.addr, amountIn);
+        tokenIn.forceApprove(address(PERMIT2), MAX_UINT256);
+
+        IAllowanceTransfer.PermitDetails memory details =
+            IAllowanceTransfer.PermitDetails({token: tokenIn, amount: amountIn, expiration: MAX_UINT48, nonce: 0});
+
+        uint256 sigDeadline = vm.getBlockTimestamp() + 10;
+        bytes memory signature = Permit2Utils.signPermit(cooper.key, details, address(rp), sigDeadline);
+
+        // Encode single permit and transferFrom
+        plan = plan.add(Permit2Utils.encodePermit(details, sigDeadline, signature));
+        plan = plan.add(Permit2Utils.encodeTransferFrom(tokenIn, amountIn));
+
+        // Encode route for WETH -> frxETH -> sfrxETH -> rETH -> WETH -> stETH -> wstETH
+        // WETH -> frxETH via Curve
+        plan = plan.addCurve(FRXETH_POOL, FRXETH, 0, 1, false, false, false);
+        // frxETH -> sfrxETH
+        plan = plan.addWrap(Protocol.Frax, address(0), SFRXETH, AssetType.LST, AssetType.WLST);
+        // sfrxETH -> rETH via Curve
+        plan = plan.addCurve(TRYLSD, RETH, 2, 1, true, false, false);
+        // rETH -> WETH via Uniswap V3
+        plan = plan.addV3Swap(UNI_V3_RETH_WETH, WETH, bytes4(0));
+        // WETH -> stETH via Uniswap V2
+        plan = plan.addV2Swap(UNI_V2_STETH_WETH, STETH, uint24(0));
+        // stETH -> wstETH
+        plan = plan.addWrap(Protocol.Lido, address(0), WSTETH, AssetType.LST, AssetType.WLST);
+        plan = plan.finalizeSwap(murphy.addr, tokenIn, amountIn, 1);
+
+        bytes memory route = plan.encode();
+        rp.processRoute(route);
+
+        assertBalances(WSTETH, murphy.addr);
+    }
+
     function test_processRoute_splitForSingleInputAndSingleOutput() public impersonate(cooper.addr) {
         address tokenIn = WETH;
         uint160 amountIn = 10 ether;
@@ -44,25 +82,27 @@ contract RouteProcessorTest is BaseTest {
         plan = plan.add(Permit2Utils.encodePermit(details, sigDeadline, signature));
         plan = plan.add(Permit2Utils.encodeTransferFrom(tokenIn, amountTotal));
 
-        // Encode route #1: WETH -> stETH -> wstETH via Uniswap V2
-        plan = plan.addV2Swap(UNI_V2_STETH_WETH, STETH, 0);
-        plan = plan.addWrap(Protocol.Lido, address(0), WSTETH, AssetType.LST, AssetType.WLST);
-        plan = plan.finalizeSwap(murphy.addr, tokenIn, amountIn, 1);
+        // Encode route #1: WETH -> stETH via Uniswap V2
+        plan = plan.addV2Swap(UNI_V2_STETH_WETH, STETH, uint24(0));
+        plan = plan.finalizeSwap(ADDRESS_THIS, tokenIn, amountIn, 1);
 
         // Encode route #2: WETH -> wstETH via Uniswap V3
         plan = plan.addV3Swap(UNI_V3_WSTETH_WETH, WSTETH, bytes4(0));
         plan = plan.finalizeSwap(murphy.addr, tokenIn, amountIn, 1);
 
-        // Encode route #3: WETH -> ETH -> stETH -> wstETH via Curve
+        // Encode route #3: WETH -> ETH -> stETH via Curve
         plan = plan.addWrap(Protocol.WETH, address(0), ETH, AssetType.WETH, AssetType.ETH);
         plan = plan.addCurve(STETH_POOL, STETH, 0, 1, false, false, false);
+        plan = plan.finalizeSwap(ADDRESS_THIS, tokenIn, amountIn, 1);
+
+        // Encode route #4: stETH -> wstETH
         plan = plan.addWrap(Protocol.Lido, address(0), WSTETH, AssetType.LST, AssetType.WLST);
-        plan = plan.finalizeSwap(murphy.addr, tokenIn, amountIn, 1);
+        plan = plan.finalizeSwap(murphy.addr, STETH, CONTRACT_BALANCE, 1);
 
         bytes memory route = plan.encode();
         rp.processRoute(route);
 
-        assertBalance(WSTETH, murphy.addr);
+        assertBalances(WSTETH, murphy.addr);
     }
 
     function test_processRoute_splitForSingleInputAndMultipleOutputs() public impersonate(cooper.addr) {
@@ -85,7 +125,7 @@ contract RouteProcessorTest is BaseTest {
         plan = plan.add(Permit2Utils.encodeTransferFrom(tokenIn, amountTotal));
 
         // Encode route #1: WETH -> stETH -> wstETH via Uniswap V2
-        plan = plan.addV2Swap(UNI_V2_STETH_WETH, STETH, 0);
+        plan = plan.addV2Swap(UNI_V2_STETH_WETH, STETH, uint24(0));
         plan = plan.addWrap(Protocol.Lido, address(0), WSTETH, AssetType.LST, AssetType.WLST);
         plan = plan.finalizeSwap(murphy.addr, tokenIn, amountIn, 1);
 
@@ -101,9 +141,9 @@ contract RouteProcessorTest is BaseTest {
         bytes memory route = plan.encode();
         rp.processRoute(route);
 
-        assertBalance(WSTETH, murphy.addr);
-        assertBalance(WEETH, murphy.addr);
-        assertBalance(SFRXETH, murphy.addr);
+        assertBalances(WSTETH, murphy.addr);
+        assertBalances(WEETH, murphy.addr);
+        assertBalances(SFRXETH, murphy.addr);
     }
 
     function test_processRoute_splitForMultipleInputsAndSingleOutput() public impersonate(cooper.addr) {
@@ -143,22 +183,23 @@ contract RouteProcessorTest is BaseTest {
         plan = plan.add(Permit2Utils.encodePermit(details, sigDeadline, signature));
         plan = plan.add(Permit2Utils.encodeTransferFrom(transferDetails));
 
-        // Encode route #1: wstETH -> stETH -> WETH -> ETH via Uniswap V2
+        // Encode route #1: wstETH -> stETH -> WETH via Uniswap V2
         plan = plan.addWrap(Protocol.Lido, address(0), STETH, AssetType.WLST, AssetType.LST);
-        plan = plan.addV2Swap(UNI_V2_STETH_WETH, WETH, 0);
-        plan = plan.addWrap(Protocol.WETH, address(0), ETH, AssetType.WETH, AssetType.ETH);
-        plan = plan.finalizeSwap(murphy.addr, tokens[0], amountIn, 1);
+        plan = plan.addV2Swap(UNI_V2_STETH_WETH, WETH, uint24(0));
+        plan = plan.finalizeSwap(ADDRESS_THIS, tokens[0], amountIn, 1);
 
-        // Encode route #2: weETH -> WETH -> ETH via Uniswap V3
+        // Encode route #2: weETH -> WETH via Uniswap V3
         plan = plan.addV3Swap(UNI_V3_WETH_WEETH, WETH, bytes4(0));
-        plan = plan.addWrap(Protocol.WETH, address(0), ETH, AssetType.WETH, AssetType.ETH);
-        plan = plan.finalizeSwap(murphy.addr, tokens[1], amountIn, 1);
+        plan = plan.finalizeSwap(ADDRESS_THIS, tokens[1], amountIn, 1);
 
-        // Encode route #3: sfrxETH -> frxETH -> WETH -> ETH via Curve
+        // Encode route #3: sfrxETH -> frxETH -> WETH via Curve
         plan = plan.addWrap(Protocol.Frax, address(0), FRXETH, AssetType.WLST, AssetType.LST);
         plan = plan.addCurve(FRXETH_POOL, WETH, 1, 0, false, false, false);
+        plan = plan.finalizeSwap(ADDRESS_THIS, tokens[2], amountIn, 1);
+
+        // Encode route #4: WETH -> ETH
         plan = plan.addWrap(Protocol.WETH, address(0), ETH, AssetType.WETH, AssetType.ETH);
-        plan = plan.finalizeSwap(murphy.addr, tokens[2], amountIn, 1);
+        plan = plan.finalizeSwap(murphy.addr, WETH, CONTRACT_BALANCE, 1);
 
         bytes memory route = plan.encode();
         rp.processRoute(route);
@@ -211,107 +252,69 @@ contract RouteProcessorTest is BaseTest {
         plan = plan.add(Permit2Utils.encodeTransferFrom(transferDetails));
 
         // Encode route #1: DAI -> WETH -> stETH -> wstETH via Uniswap V2
-        plan = plan.addV2Swap(UNI_V2_DAI_WETH, WETH, 0);
-        plan = plan.addV2Swap(UNI_V2_STETH_WETH, STETH, 0);
+        plan = plan.addV2Swap(UNI_V2_DAI_WETH, WETH, uint24(0));
+        plan = plan.addV2Swap(UNI_V2_STETH_WETH, STETH, uint24(0));
         plan = plan.addWrap(Protocol.Lido, address(0), WSTETH, AssetType.LST, AssetType.WLST);
-        plan = plan.finalizeSwap(murphy.addr, tokens[0], amounts[0], 1);
+        plan = plan.finalizeSwap(murphy.addr, tokens[0], CONTRACT_BALANCE, 1);
 
         // Encode route #2: USDC -> WETH -> weETH via Uniswap V3
         plan = plan.addV3Swap(UNI_V3_USDC_WETH, WETH, bytes4(0));
         plan = plan.addV3Swap(UNI_V3_WETH_WEETH, WEETH, bytes4(0));
-        plan = plan.finalizeSwap(murphy.addr, tokens[1], amounts[1], 1);
+        plan = plan.finalizeSwap(murphy.addr, tokens[1], CONTRACT_BALANCE, 1);
 
         // Encode route #3: USDT -> WETH -> frxETH -> sfrxETH via Curve
         plan = plan.addCurve(TRICRYPTO, WETH, 0, 2, true, false, true);
         plan = plan.addCurve(FRXETH_POOL, FRXETH, 0, 1, false, false, false);
         plan = plan.addWrap(Protocol.Frax, address(0), SFRXETH, AssetType.LST, AssetType.WLST);
-        plan = plan.finalizeSwap(murphy.addr, tokens[2], amounts[2], 1);
+        plan = plan.finalizeSwap(murphy.addr, tokens[2], CONTRACT_BALANCE, 1);
 
         bytes memory route = plan.encode();
         rp.processRoute(route);
 
-        assertBalance(WSTETH, murphy.addr);
-        assertBalance(WEETH, murphy.addr);
-        assertBalance(SFRXETH, murphy.addr);
+        assertBalances(WSTETH, murphy.addr);
+        assertBalances(WEETH, murphy.addr);
+        assertBalances(SFRXETH, murphy.addr);
     }
 
-    function test_processRoute_complexRoute() public impersonate(cooper.addr) {
-        address tokenIn = WETH;
-        uint160 amountIn = 10 ether;
-
-        deal(tokenIn, cooper.addr, amountIn);
-        tokenIn.forceApprove(address(PERMIT2), MAX_UINT256);
-
-        IAllowanceTransfer.PermitDetails memory details =
-            IAllowanceTransfer.PermitDetails({token: tokenIn, amount: amountIn, expiration: MAX_UINT48, nonce: 0});
-
-        uint256 sigDeadline = vm.getBlockTimestamp() + 10;
-        bytes memory signature = Permit2Utils.signPermit(cooper.key, details, address(rp), sigDeadline);
-
-        // Encode single permit and transferFrom
-        plan = plan.add(Permit2Utils.encodePermit(details, sigDeadline, signature));
-        plan = plan.add(Permit2Utils.encodeTransferFrom(tokenIn, amountIn));
-
-        // Encode route for WETH -> frxETH -> sfrxETH -> rETH -> WETH -> stETH -> wstETH
-        // WETH -> frxETH via Curve
-        plan = plan.addCurve(FRXETH_POOL, FRXETH, 0, 1, false, false, false);
-        // frxETH -> sfrxETH
-        plan = plan.addWrap(Protocol.Frax, address(0), SFRXETH, AssetType.LST, AssetType.WLST);
-        // sfrxETH -> rETH via Curve
-        plan = plan.addCurve(TRYLSD, RETH, 2, 1, true, false, false);
-        // rETH -> WETH via Uniswap V3
-        plan = plan.addV3Swap(UNI_V3_RETH_WETH, WETH, bytes4(0));
-        // WETH -> stETH via Uniswap V2
-        plan = plan.addV2Swap(UNI_V2_STETH_WETH, STETH, 0);
-        // stETH -> wstETH
-        plan = plan.addWrap(Protocol.Lido, address(0), WSTETH, AssetType.LST, AssetType.WLST);
-        plan = plan.finalizeSwap(murphy.addr, tokenIn, amountIn, 1);
-
-        bytes memory route = plan.encode();
-        rp.processRoute(route);
-
-        assertBalance(WSTETH, murphy.addr);
-    }
-
-    function test_sweep_native() public {
+    function test_sweep_native() public impersonate(cooper.addr) {
         address token = ETH;
         uint256 amount = 1 ether;
 
         deal(token, address(rp), amount);
 
         // Encode sweep for native token
-        plan = plan.add(abi.encodePacked(Commands.SWEEP, token, murphy.addr, amount));
+        plan = plan.add(abi.encodePacked(Commands.SWEEP, token, MSG_SENDER, amount));
 
         bytes memory route = plan.encode();
         rp.processRoute(route);
 
-        assertEq(token.balanceOf(murphy.addr), amount);
+        assertEq(token.balanceOf(cooper.addr), amount);
         assertEq(token.balanceOf(address(rp)), 0);
 
         vm.expectRevert(Errors.InsufficientBalance.selector);
         rp.processRoute(route);
     }
 
-    function test_sweep_ERC20() public {
+    function test_sweep_ERC20() public impersonate(cooper.addr) {
         address token = WETH;
         uint256 amount = 1 ether;
 
         deal(token, address(rp), amount);
 
         // Encode sweep for ERC20 token
-        plan = plan.add(abi.encodePacked(Commands.SWEEP, token, murphy.addr, amount));
+        plan = plan.add(abi.encodePacked(Commands.SWEEP, token, MSG_SENDER, amount));
 
         bytes memory route = plan.encode();
         rp.processRoute(route);
 
-        assertEq(token.balanceOf(murphy.addr), amount);
+        assertEq(token.balanceOf(cooper.addr), amount);
         assertEq(token.balanceOf(address(rp)), 0);
 
         vm.expectRevert(Errors.InsufficientBalance.selector);
         rp.processRoute(route);
     }
 
-    function assertBalance(address token, address recipient) internal view {
+    function assertBalances(address token, address recipient) internal view {
         assertGt(token.balanceOf(recipient), 0);
         assertEq(token.balanceOf(address(rp)), 0);
     }

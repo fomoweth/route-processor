@@ -74,7 +74,7 @@ contract RouteProcessor is
     /// @param stream Encoded stream containing pool and token data for each hop.
     /// @return amountOut The final output amount after all hops
     function processSwap(Stream stream) internal returns (uint256 amountOut) {
-        address recipient = stream.parseAddress();
+        address recipient = _mapRecipient(stream.parseAddress());
         address tokenIn = stream.parseAddress();
         uint256 amountIn = stream.parseUint256();
         uint256 amountOutMinimum = stream.parseUint256();
@@ -117,7 +117,7 @@ contract RouteProcessor is
     /// @param stream Encoded stream containing token, recipient, and minimum amount to enforce.
     function sweep(Stream stream) internal {
         address token = stream.parseAddress();
-        address recipient = stream.parseAddress();
+        address recipient = _mapRecipient(stream.parseAddress());
         uint256 amountMinimum = stream.parseUint256();
         uint256 balance = token.balanceOfSelf();
 
@@ -126,6 +126,15 @@ contract RouteProcessor is
 
         // Transfer the full token balance to the recipient
         if (balance != 0) token.safeTransfer(recipient, balance);
+    }
+
+    function _mapRecipient(address recipient) private view returns (address result) {
+        assembly ("memory-safe") {
+            switch recipient
+            case 0x01 { result := caller() }
+            case 0x02 { result := address() }
+            default { result := recipient }
+        }
     }
 
     function _checkDeadline(uint256 deadline) private view {
