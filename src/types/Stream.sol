@@ -31,7 +31,16 @@ library StreamLibrary {
         }
     }
 
-    /// @dev Reads an address (20 bytes) and advances the cursor.
+    /// @dev Reads and casts one byte as a {Protocol} enum.
+    function parseProtocol(Stream stream) internal pure returns (Protocol result) {
+        assembly ("memory-safe") {
+            let pos := add(mload(stream), 0x01)
+            result := and(mload(pos), 0xff)
+            mstore(stream, pos)
+        }
+    }
+
+    /// @dev Reads 20 bytes and returns an address.
     function parseAddress(Stream stream) internal pure returns (address result) {
         assembly ("memory-safe") {
             let pos := add(mload(stream), 0x14)
@@ -42,15 +51,6 @@ library StreamLibrary {
 
     /// @dev Reads one byte and interprets it as a boolean.
     function parseBool(Stream stream) internal pure returns (bool result) {
-        assembly ("memory-safe") {
-            let pos := add(mload(stream), 0x01)
-            result := and(mload(pos), 0xff)
-            mstore(stream, pos)
-        }
-    }
-
-    /// @dev Reads and casts one byte as a {Protocol} enum.
-    function parseProtocol(Stream stream) internal pure returns (Protocol result) {
         assembly ("memory-safe") {
             let pos := add(mload(stream), 0x01)
             result := and(mload(pos), 0xff)
@@ -98,7 +98,7 @@ library StreamLibrary {
     function parseUint128(Stream stream) internal pure returns (uint128 result) {
         assembly ("memory-safe") {
             let pos := add(mload(stream), 0x10)
-            result := and(mload(pos), 0xffffffffffffffffffffffffffff)
+            result := and(mload(pos), 0xffffffffffffffffffffffffffffffff)
             mstore(stream, pos)
         }
     }
