@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {VmSafe} from "forge-std/Vm.sol";
 import {IAllowanceTransfer} from "permit2/interfaces/IAllowanceTransfer.sol";
+import {Commands} from "src/libraries/Commands.sol";
 
 library Permit2Utils {
     VmSafe private constant vm = VmSafe(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -16,6 +17,50 @@ library Permit2Utils {
     bytes32 private constant PERMIT_SINGLE_TYPEHASH = 0xf3841cd1ff0085026a6327b620b67997ce40f282c88a8e905a7a5626e310f3d0;
 
     bytes32 private constant PERMIT_BATCH_TYPEHASH = 0xaf1b0d30d2cab0380e68f0689007e3254993c596f2fdd0aaa7f4d04f79440863;
+
+    address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+
+    function encodeTransferFrom(address token, uint256 amount) internal pure returns (bytes memory result) {
+        if (token == ETH || token == address(0)) return result;
+        return abi.encodePacked(Commands.PERMIT2_TRANSFER_FROM, token, uint160(amount));
+    }
+
+    function encodeTransferFrom(IAllowanceTransfer.AllowanceTransferDetails memory details)
+        internal
+        pure
+        returns (bytes memory result)
+    {
+        if (details.token == ETH || details.token == address(0)) return result;
+        return abi.encodePacked(Commands.PERMIT2_TRANSFER_FROM, details.token, details.amount);
+    }
+
+    function encodeTransferFrom(IAllowanceTransfer.AllowanceTransferDetails[] memory details)
+        internal
+        pure
+        returns (bytes memory result)
+    {
+        if (details.length == 0) return result;
+        return abi.encodePacked(Commands.PERMIT2_TRANSFER_FROM_BATCH, b(abi.encode(details)));
+    }
+
+    function encodePermit(IAllowanceTransfer.PermitDetails memory details, uint256 sigDeadline, bytes memory signature)
+        internal
+        pure
+        returns (bytes memory result)
+    {
+        if (details.token == ETH || details.token == address(0)) return result;
+        uint256 word = (uint256(details.nonce) << 208) | (uint256(details.expiration) << 160) | uint256(details.amount);
+        return abi.encodePacked(Commands.PERMIT2_PERMIT, details.token, word, sigDeadline, b(signature));
+    }
+
+    function encodePermit(
+        IAllowanceTransfer.PermitDetails[] memory details,
+        uint256 sigDeadline,
+        bytes memory signature
+    ) internal pure returns (bytes memory result) {
+        if (details.length == 0) return result;
+        return abi.encodePacked(Commands.PERMIT2_PERMIT_BATCH, b(abi.encode(details)), sigDeadline, b(signature));
+    }
 
     function signPermit(
         uint256 privateKey,
@@ -53,5 +98,9 @@ library Permit2Utils {
             hashes = bytes.concat(hashes, _hashDetails(details[i]));
         }
         return keccak256(hashes);
+    }
+
+    function b(bytes memory data) internal pure returns (bytes memory) {
+        return abi.encodePacked(data.length, data);
     }
 }

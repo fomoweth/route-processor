@@ -6,7 +6,6 @@ import {IAllowanceTransfer as IPermit2} from "permit2/interfaces/IAllowanceTrans
 import {Errors} from "src/libraries/Errors.sol";
 import {SafeTransferLib} from "src/libraries/SafeTransferLib.sol";
 import {BaseTest} from "test/shared/BaseTest.sol";
-import {Encoder} from "test/shared/Encoder.sol";
 import {Permit2Utils} from "test/shared/Permit2Utils.sol";
 
 contract Permit2ForwarderTest is BaseTest {
@@ -45,7 +44,7 @@ contract Permit2ForwarderTest is BaseTest {
 
         uint256 sigDeadline = vm.getBlockTimestamp() + 10;
         bytes memory signature = cooper.key.signPermit(details, address(rp), sigDeadline);
-        bytes memory route = Encoder.encodePermit(details, sigDeadline, signature);
+        bytes memory route = Permit2Utils.encodePermit(details, sigDeadline, signature);
 
         vm.expectEmit(true, true, true, true);
         emit IPermit2.Permit(cooper.addr, token, address(rp), details.amount, MAX_UINT48, 0);
@@ -71,7 +70,7 @@ contract Permit2ForwarderTest is BaseTest {
 
         uint256 sigDeadline = vm.getBlockTimestamp() + 10;
         bytes memory signature = mann.key.signPermit(details, address(rp), sigDeadline);
-        bytes memory route = Encoder.encodePermit(details, sigDeadline, signature);
+        bytes memory route = Permit2Utils.encodePermit(details, sigDeadline, signature);
 
         vm.expectRevert(InvalidSigner.selector);
         vm.prank(cooper.addr);
@@ -95,7 +94,7 @@ contract Permit2ForwarderTest is BaseTest {
 
         uint256 sigDeadline = vm.getBlockTimestamp() + 10;
         bytes memory signature = cooper.key.signPermit(details, address(rp), sigDeadline);
-        bytes memory route = Encoder.encodePermit(details, sigDeadline, signature);
+        bytes memory route = Permit2Utils.encodePermit(details, sigDeadline, signature);
 
         vm.prank(cooper.addr);
         rp.processRoute(route);
@@ -122,7 +121,7 @@ contract Permit2ForwarderTest is BaseTest {
 
         uint256 sigDeadline = vm.getBlockTimestamp() + 10;
         bytes memory signature = mann.key.signPermit(details, address(rp), sigDeadline);
-        bytes memory route = Encoder.encodePermit(details, sigDeadline, signature);
+        bytes memory route = Permit2Utils.encodePermit(details, sigDeadline, signature);
 
         vm.expectRevert(InvalidSigner.selector);
         vm.prank(cooper.addr);
@@ -132,7 +131,7 @@ contract Permit2ForwarderTest is BaseTest {
     function test_permit2TransferFrom(uint256 seed) public {
         address token = random(tokens, seed);
         uint256 amount = token.balanceOf(cooper.addr);
-        bytes memory route = Encoder.encodeTransferFrom(token, amount);
+        bytes memory route = Permit2Utils.encodeTransferFrom(token, amount);
 
         vm.expectEmit(true, true, true, true);
         emit IERC20.Transfer(cooper.addr, address(rp), amount);
@@ -156,7 +155,7 @@ contract Permit2ForwarderTest is BaseTest {
             emit IERC20.Transfer(cooper.addr, address(rp), details[i].amount);
         }
 
-        bytes memory route = Encoder.encodeTransferFrom(details);
+        bytes memory route = Permit2Utils.encodeTransferFrom(details);
         vm.prank(cooper.addr);
         rp.processRoute(route);
 
@@ -176,7 +175,7 @@ contract Permit2ForwarderTest is BaseTest {
             });
         }
 
-        bytes memory route = Encoder.encodeTransferFrom(details);
+        bytes memory route = Permit2Utils.encodeTransferFrom(details);
         vm.expectRevert(Errors.InvalidSender.selector);
         vm.prank(cooper.addr);
         rp.processRoute(route);
@@ -193,7 +192,7 @@ contract Permit2ForwarderTest is BaseTest {
             });
         }
 
-        bytes memory route = Encoder.encodeTransferFrom(details);
+        bytes memory route = Permit2Utils.encodeTransferFrom(details);
         vm.expectRevert(Errors.InvalidRecipient.selector);
         vm.prank(cooper.addr);
         rp.processRoute(route);

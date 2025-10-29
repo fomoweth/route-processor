@@ -16,6 +16,9 @@ import {ReentrancyGuard} from "src/utils/ReentrancyGuard.sol";
 
 /// @title RouteProcessor
 /// @notice Stateless route execution engine that interprets and executes encoded command streams.
+/// @dev Integrates modular route processors (Curve, Uniswap V2/V3, and native LST/LRT handlers)
+///      into a unified entrypoint. Each command is decoded and dispatched inline for maximum
+///      gas efficiency. Enforces atomic execution, reentrancy protection, and deadline validation.
 contract RouteProcessor is
     IRouteProcessor,
     ReentrancyGuard,

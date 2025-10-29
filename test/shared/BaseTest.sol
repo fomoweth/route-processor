@@ -28,16 +28,13 @@ abstract contract BaseTest is Test, Constants {
     }
 
     function setUp() public virtual {
-        vm.createSelectFork("mainnet", FORK_BLOCK);
-
+        vm.createSelectFork("mainnet", 23265742);
         rp = new RouteProcessor();
 
         cooper = makeAccount("cooper");
         murphy = makeAccount("murphy");
 
         plan = Planner.init();
-
-        revertToState();
     }
 
     function revertToState() internal {

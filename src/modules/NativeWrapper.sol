@@ -464,7 +464,7 @@ abstract contract NativeWrapper {
             }
 
             if iszero(received) {
-                mstore(0x00, 0x910f3412) // InsufficientAmountReceived()
+                mstore(0x00, 0xe52970aa) // InsufficientAmountOut()
                 revert(0x1c, 0x04)
             }
 

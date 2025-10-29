@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {Commands} from "src/libraries/Commands.sol";
+import {AssetType, Protocol} from "src/types/Enums.sol";
 
 using Planner for Plan global;
 
@@ -45,6 +46,43 @@ library Planner {
         return plan;
     }
 
+    function addV2Swap(Plan memory plan, address pool, address tokenOut, uint24 fee)
+        internal
+        pure
+        returns (Plan memory)
+    {
+        return plan.addPath(abi.encodePacked(Protocol.UniswapV2, pool, tokenOut, fee));
+    }
+
+    function addV3Swap(Plan memory plan, address pool, address tokenOut, bytes4 callbackSelector)
+        internal
+        pure
+        returns (Plan memory result)
+    {
+        return plan.addPath(abi.encodePacked(Protocol.UniswapV3, pool, tokenOut, callbackSelector));
+    }
+
+    function addCurve(
+        Plan memory plan,
+        address pool,
+        address tokenOut,
+        uint8 i,
+        uint8 j,
+        bool isCrypto,
+        bool useUnderlying,
+        bool useEth
+    ) internal pure returns (Plan memory result) {
+        return plan.addPath(abi.encodePacked(Protocol.Curve, pool, tokenOut, i, j, isCrypto, useUnderlying, useEth));
+    }
+
+    function addWrap(Plan memory plan, Protocol protocol, address pool, address tokenOut, AssetType i, AssetType j)
+        internal
+        pure
+        returns (Plan memory result)
+    {
+        return plan.addPath(abi.encodePacked(protocol, pool, tokenOut, i, j));
+    }
+
     function finalizeSwap(Plan memory plan, address recipient, address tokenIn, uint256 amountIn, uint256 amountOutMin)
         internal
         pure
@@ -56,7 +94,7 @@ library Planner {
         bytes[] memory path = plan.path;
         plan.path = new bytes[](0);
 
-        bytes memory action = abi.encodePacked(uint8(Commands.SWAP), recipient, tokenIn, amountIn, amountOutMin, n);
+        bytes memory action = abi.encodePacked(Commands.SWAP, recipient, tokenIn, amountIn, amountOutMin, n);
         for (uint256 i = 0; i < n; ++i) {
             action = bytes.concat(action, path[i]);
         }
